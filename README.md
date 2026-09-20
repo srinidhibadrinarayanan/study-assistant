@@ -3,7 +3,7 @@
 A full-stack web app where students enter a topic and get an AI-generated explanation, study notes, a quiz, or a personalized study plan at their chosen difficulty. Chats are saved per user.
 
 **Live demo:** https://study-assistant-rose.vercel.app
-**Demo video:** PASTE_YOUR_VIDEO_LINK
+**Demo video:** https://drive.google.com/file/d/15gG152VJckW9iM4BpSqmFkR7sub4mj0W/view?usp=drivesdk
 
 ## Features
 - User registration and login (Supabase Auth)
@@ -75,9 +75,6 @@ A full-stack web app where students enter a topic and get an AI-generated explan
    npm run dev
 ```
    Open http://localhost:3000
-
-## Screenshots
-Add screenshots here.
 
 ## Author
 Srinidhi
