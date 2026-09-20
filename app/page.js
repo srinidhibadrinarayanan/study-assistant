@@ -38,6 +38,7 @@ export default function Home() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastRequest, setLastRequest] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -60,6 +61,7 @@ export default function Home() {
 
   async function openConversation(id) {
     setActiveId(id);
+    setSidebarOpen(false);
     const { data } = await supabase
       .from("messages")
       .select("*")
@@ -89,6 +91,7 @@ export default function Home() {
     setActiveId(null);
     setMessages([]);
     setLastRequest(null);
+    setSidebarOpen(false);
   }
 
   async function deleteConversation(id, e) {
@@ -184,8 +187,19 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-dvh overflow-hidden">
-      <aside className="md:w-64 shrink-0 max-h-[35vh] md:max-h-none overflow-y-auto border-b md:border-b-0 md:border-r border-gray-700 p-4 space-y-2">
+    <div className="flex h-dvh overflow-hidden">
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 text-white border-r border-gray-700 p-4 space-y-2 overflow-y-auto transform transition-transform duration-200 md:static md:translate-x-0 md:shrink-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <button
           onClick={newChat}
           className="w-full bg-blue-600 text-white px-3 py-2 rounded"
@@ -222,92 +236,107 @@ export default function Home() {
         </button>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto w-full p-8">
-          <h1 className="text-3xl font-bold mb-4">AI Study Assistant</h1>
-
-          <div className="space-y-4 mb-4">
-            {messages.map((m, i) => {
-              if (m.role === "user") {
-                return (
-                  <div key={i} className="text-right">
-                    <span className="inline-block bg-blue-600 text-white rounded px-3 py-2">
-                      {m.text}
-                    </span>
-                  </div>
-                );
-              }
-              if (m.error) {
-                return (
-                  <div key={i} className="bg-red-100 text-red-800 rounded p-4">
-                    <p>{m.text}</p>
-                    {i === messages.length - 1 && lastRequest && (
-                      <button
-                        onClick={retry}
-                        disabled={loading}
-                        className="mt-2 bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
-                      >
-                        Retry
-                      </button>
-                    )}
-                  </div>
-                );
-              }
-              return (
-                <div key={i} className="bg-gray-100 text-black rounded p-4">
-                  <div className="prose max-w-none">
-                    <ReactMarkdown>{m.text}</ReactMarkdown>
-                  </div>
-                  <button
-                    onClick={() => downloadText(m.text, "study-notes.md")}
-                    className="mt-3 text-sm border border-gray-400 rounded px-3 py-1 hover:bg-gray-200"
-                  >
-                    Download
-                  </button>
-                </div>
-              );
-            })}
-            {loading && <p className="text-gray-500">Thinking...</p>}
-          </div>
-
-          <div className="flex flex-wrap gap-2 mb-2">
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setMode(m.id)}
-                className={`px-3 py-1 rounded border ${
-                  mode === m.id ? "bg-blue-600 text-white" : "bg-white text-black"
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
-            <select
-              value={level}
-              onChange={(e) => setLevel(e.target.value)}
-              className="border px-2 py-1 rounded bg-white text-black"
-            >
-              <option>Beginner</option>
-              <option>Intermediate</option>
-              <option>Advanced</option>
-            </select>
-          </div>
-
-          <input
-            className="border p-2 w-full mb-2 bg-white text-black"
-            placeholder="Enter a topic..."
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-          />
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="md:hidden flex items-center gap-3 p-3 border-b border-gray-700">
           <button
-            onClick={handleSend}
-            disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open chats"
+            className="text-2xl leading-none px-2"
           >
-            Send
+            ☰
           </button>
+          <span className="font-semibold">AI Study Assistant</span>
         </div>
-      </main>
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto w-full p-4 md:p-8">
+            <h1 className="hidden md:block text-3xl font-bold mb-4">
+              AI Study Assistant
+            </h1>
+
+            <div className="space-y-4 mb-4">
+              {messages.map((m, i) => {
+                if (m.role === "user") {
+                  return (
+                    <div key={i} className="text-right">
+                      <span className="inline-block bg-blue-600 text-white rounded px-3 py-2">
+                        {m.text}
+                      </span>
+                    </div>
+                  );
+                }
+                if (m.error) {
+                  return (
+                    <div key={i} className="bg-red-100 text-red-800 rounded p-4">
+                      <p>{m.text}</p>
+                      {i === messages.length - 1 && lastRequest && (
+                        <button
+                          onClick={retry}
+                          disabled={loading}
+                          className="mt-2 bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <div key={i} className="bg-gray-100 text-black rounded p-4">
+                    <div className="prose max-w-none">
+                      <ReactMarkdown>{m.text}</ReactMarkdown>
+                    </div>
+                    <button
+                      onClick={() => downloadText(m.text, "study-notes.md")}
+                      className="mt-3 text-sm border border-gray-400 rounded px-3 py-1 hover:bg-gray-200"
+                    >
+                      Download
+                    </button>
+                  </div>
+                );
+              })}
+              {loading && <p className="text-gray-500">Thinking...</p>}
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-2">
+              {MODES.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  className={`px-3 py-1 rounded border ${
+                    mode === m.id ? "bg-blue-600 text-white" : "bg-white text-black"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+              <select
+                value={level}
+                onChange={(e) => setLevel(e.target.value)}
+                className="border px-2 py-1 rounded bg-white text-black"
+              >
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+              </select>
+            </div>
+
+            <input
+              className="border p-2 w-full mb-2 bg-white text-black"
+              placeholder="Enter a topic..."
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+            />
+            <button
+              onClick={handleSend}
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              Send
+            </button>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
